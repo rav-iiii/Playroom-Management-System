@@ -1,0 +1,167 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <map>
+#include <iomanip>
+
+using namespace std;
+
+class GameReservation {
+public:
+    string gameName;
+    string playerName;
+    string date;
+    int duration;
+    float cost;
+
+    GameReservation(const string& game, const string& player, const string& reservationDate, int hours, const map<string, float>& gameRates)
+        : gameName(game), playerName(player), date(reservationDate), duration(hours) {
+
+        auto it = gameRates.find(game);
+        if (it != gameRates.end()) {
+            hourlyRate = it->second;
+        }
+        else {
+            hourlyRate = 5.0;
+        }
+
+        cost = calculateCost();
+    }
+
+private:
+    float hourlyRate;
+
+    float calculateCost() {
+        return hourlyRate * duration;
+    }
+};
+
+class Playroom {
+public:
+    void displayAvailableGames() const {
+        cout << "\nAvailable Games:\n\n";
+        cout << left << setw(20) << "Game" << "Rate per hour" << endl;
+        cout << setfill('-') << setw(35) << "" << setfill(' ') << endl;
+
+        for (const auto& game : availableGames) {
+            cout << setw(20) << left << game.first << "$" << game.second << " per hour\n";
+        }
+    }
+
+    void reserveGame() {
+        string game, player, date, paymentMethod, accountDetails, confirmation;
+        int hours;
+
+        displayAvailableGames(); // Display available games as a guide for the User when inputting a Game name
+
+        cin.ignore();
+
+        cout << "\nEnter game name: ";
+        getline(cin, game);
+
+        while (availableGames.find(game) == availableGames.end()) {
+            cout << "Invalid game name. Please choose from the available games:\n";
+            displayAvailableGames();
+            cout << "\nEnter game name: ";
+            getline(cin, game);
+        }
+
+        auto it = availableGames.find(game);
+        float rate = it->second;
+
+        cout << "\nEnter player name: ";
+        getline(cin, player);
+
+        cout << "\nEnter reservation date (YYYY-MM-DD): ";
+        cin >> date;
+
+        cout << "\nEnter duration (in hours): ";
+        cin >> hours;
+
+        float totalCost = rate * hours;
+
+        cout << "\nThe total cost of the reservation for " << hours << " hours of " << game << " is: $" << totalCost << endl;
+
+        cout << "\nSelect payment method (cash, card, or gcash): ";
+        cin.ignore();
+        getline(cin, paymentMethod);
+
+        if (paymentMethod == "card" || paymentMethod == "gcash") {
+            cout << "\nEnter account details or number for payment: ";
+            getline(cin, accountDetails);
+        }
+
+        cout << "\nConfirm payment? (yes/no): ";
+        getline(cin, confirmation);
+
+        if (confirmation == "yes") {
+            cout << "\n\nPayment received. Game reserved successfully.\n";
+
+            GameReservation reservation(game, player, date, hours, availableGames);
+            reservations.push_back(reservation);
+
+            displayReservationHistory();
+        }
+        else {
+            cout << "\nPayment not confirmed. Reservation canceled.\n";
+        }
+    }
+
+    void displayReservationHistory() const {
+        cout << "\n\n\nReservation History:\n\n";
+        cout << left << setw(15) << "Date" << setw(15) << "Game" << setw(15) << "Player" << setw(15) << "Duration" << "Cost" << endl;
+        cout << setfill('-') << setw(75) << "-" << setfill(' ') << endl;
+
+        cout << fixed << setprecision(2);
+        for (const auto& reservation : reservations) {
+            cout << left << setw(15) << reservation.date
+                << setw(15) << reservation.gameName
+                << setw(15) << reservation.playerName
+                << setw(15) << reservation.duration
+                << "$" << reservation.cost << "\n\n";
+        }
+    }
+
+private:
+    map<string, float> availableGames = { {"Table Tennis", 6.0}, {"Archery", 8.0}, {"Billiards", 7.0} };
+    vector<GameReservation> reservations;
+};
+
+int main() {
+    Playroom playroom;
+
+    int choice;
+    do {
+        cout << setw(76) << "============================\n";
+        cout << setw(75) << "Welcome to Rav's Playroom!\n";
+        cout << setw(76) << "============================\n";
+        cout << "\nPlease select an option: \n\n";
+        cout << "1. Display Available Games\n\n";
+        cout << "2. Reserve a Game\n\n";
+        cout << "3. Display Reservation History\n\n";
+        cout << "4. Exit\n\n";
+        cout << "\nEnter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            playroom.displayAvailableGames();
+            break;
+        case 2:
+            playroom.reserveGame();
+            break;
+        case 3:
+            playroom.displayReservationHistory();
+            break;
+        case 4:
+            cout << "\n\nThank You for visiting Rav's Playroom! :D\n\n" << "  Exiting now...";
+            break;
+        default:
+            cout << "Invalid choice. Try again.\n";
+        }
+        cout << setw(50) << "\n\n";
+    } while (choice != 4);
+
+    return 0;
+}
